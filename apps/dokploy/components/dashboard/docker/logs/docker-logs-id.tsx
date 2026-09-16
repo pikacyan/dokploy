@@ -146,6 +146,9 @@ export const DockerLogsId: React.FC<Props> = ({
 
 		let isCurrentConnection = true;
 		let noDataTimeout: NodeJS.Timeout;
+		let flushTimeout: NodeJS.Timeout | undefined;
+		let maxFlushTimeout: NodeJS.Timeout | undefined;
+		let pendingLogs = "";
 		setIsLoading(true);
 		setRawLogs("");
 		setFilteredLogs([]);
@@ -175,6 +178,33 @@ export const DockerLogsId: React.FC<Props> = ({
 			window.location.host
 		}/docker-container-logs?${params.toString()}`;
 		const ws = new WebSocket(wsUrl);
+		const flushPendingLogs = () => {
+			if (!pendingLogs) return;
+
+			const content = pendingLogs;
+			pendingLogs = "";
+			clearTimeout(flushTimeout);
+			clearTimeout(maxFlushTimeout);
+			flushTimeout = undefined;
+			maxFlushTimeout = undefined;
+			setRawLogs((prev) => {
+				const updated = prev + content;
+				const splitLines = updated.split("\n");
+				if (splitLines.length > lines) {
+					return splitLines.slice(-lines).join("\n");
+				}
+				return updated;
+			});
+			setIsLoading(false);
+		};
+		const queueLogs = (content: string) => {
+			pendingLogs += content;
+			clearTimeout(flushTimeout);
+			flushTimeout = setTimeout(flushPendingLogs, 50);
+			if (!maxFlushTimeout) {
+				maxFlushTimeout = setTimeout(flushPendingLogs, 250);
+			}
+		};
 
 		const resetNoDataTimeout = () => {
 			if (noDataTimeout) clearTimeout(noDataTimeout);
@@ -200,18 +230,10 @@ export const DockerLogsId: React.FC<Props> = ({
 				// When paused, buffer the messages instead of displaying them
 				setMessageBuffer((prev) => [...prev, e.data]);
 			} else {
-				// When not paused, display messages normally
-				setRawLogs((prev) => {
-					const updated = prev + e.data;
-					const splitLines = updated.split("\n");
-					if (splitLines.length > lines) {
-						return splitLines.slice(-lines).join("\n");
-					}
-					return updated;
-				});
+				// Batch the initial burst instead of parsing and rendering every chunk.
+				queueLogs(e.data);
 			}
 
-			setIsLoading(false);
 			if (noDataTimeout) clearTimeout(noDataTimeout);
 		};
 
@@ -232,6 +254,8 @@ export const DockerLogsId: React.FC<Props> = ({
 		return () => {
 			isCurrentConnection = false;
 			if (noDataTimeout) clearTimeout(noDataTimeout);
+			clearTimeout(flushTimeout);
+			clearTimeout(maxFlushTimeout);
 			if (ws.readyState === WebSocket.OPEN) {
 				ws.close();
 			}
