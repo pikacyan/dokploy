@@ -73,10 +73,11 @@ describe("isValidSearch (docker-container-logs)", () => {
 		expect(isValidSearch("")).toBe(true);
 	});
 
-	it("accepts only alphanumeric, space, dot, underscore, hyphen", () => {
+	it("accepts Unicode letters and numbers, space, dot, underscore, hyphen", () => {
 		expect(isValidSearch("error")).toBe(true);
 		expect(isValidSearch("foo bar")).toBe(true);
 		expect(isValidSearch("a-zA-Z0-9_.-")).toBe(true);
+		expect(isValidSearch("数据库初始化完成")).toBe(true);
 		expect(isValidSearch("")).toBe(true);
 	});
 

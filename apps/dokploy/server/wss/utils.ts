@@ -38,12 +38,12 @@ export const isValidSince = (since: string): boolean => {
 /**
  * Validates the `search` parameter for log filtering.
  * Search is concatenated into shell commands (SSH path: double quotes; local path: single quotes).
- * Only allow alphanumeric, space, dot, underscore, hyphen to prevent $, `, ', " from enabling command injection.
+ * Only allow Unicode letters/numbers, space, dot, underscore, and hyphen to prevent shell injection.
  * Max length 500.
  */
 export const isValidSearch = (search: string): boolean => {
 	// Space only (not \s) to reject \n, \r, \t and other control chars
-	return /^[a-zA-Z0-9 ._-]{0,500}$/.test(search);
+	return /^[\p{L}\p{N} ._-]{0,500}$/u.test(search);
 };
 
 /**
