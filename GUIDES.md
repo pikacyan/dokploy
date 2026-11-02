@@ -48,3 +48,9 @@ sudo apt-get install docker-ce docker-ce-cli containerd.io docker-buildx-plugin 
 3. Download the installer
 4. Run the installer and follow the prompts
 5. Start Docker Desktop from the Start menu
+
+## Missing-image recovery
+
+Self-hosted Dokploy checks once per minute for locally built applications with no running replicas whose latest Swarm task reports `No such image`. It queues the existing redeploy operation using the source already on disk. Stopped applications and queued deployments are skipped; eligibility is checked again when the job starts.
+
+The latest non-preview deployment record prevents repeat automatic rebuilds, including after a Dokploy restart. After one automatic attempt, another requires a manual deployment first. Existing build notifications are reused. No new notification settings or database migration are required.

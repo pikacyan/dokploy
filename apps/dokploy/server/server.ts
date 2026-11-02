@@ -17,6 +17,7 @@ import {
 import { config } from "dotenv";
 import next from "next";
 import packageInfo from "../package.json";
+import { initMissingImageRecovery } from "./utils/missing-image-recovery";
 import { setupDockerContainerLogsWebSocketServer } from "./wss/docker-container-logs";
 import { setupDockerContainerTerminalWebSocketServer } from "./wss/docker-container-terminal";
 import { setupDockerStatsMonitoringSocketServer } from "./wss/docker-stats";
@@ -66,6 +67,7 @@ void app.prepare().then(async () => {
 				console.error("Failed to restore Traefik:", error);
 			});
 			await initCronJobs();
+			initMissingImageRecovery();
 			await initSchedules();
 			await initCancelDeployments();
 			await initVolumeBackupsCronJobs();

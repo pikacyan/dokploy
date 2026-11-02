@@ -329,6 +329,18 @@ export const rebuildApplication = async ({
 		await writeDeploymentErrorLog(deployment, serverId, error);
 		await updateDeploymentStatus(deployment.deploymentId, "error");
 		await updateApplicationStatus(applicationId, "error");
+		await sendBuildErrorNotifications({
+			projectName: application.environment.project.name,
+			applicationName: application.name,
+			applicationType: "application",
+			errorMessage: await getBuildErrorMessage(
+				error,
+				deployment.logPath,
+				serverId,
+			),
+			buildLink,
+			organizationId: application.environment.project.organizationId,
+		});
 		throw error;
 	}
 

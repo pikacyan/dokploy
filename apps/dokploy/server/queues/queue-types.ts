@@ -6,6 +6,7 @@ type DeployJob =
 			server?: boolean;
 			type: "deploy" | "redeploy";
 			applicationType: "application";
+			recoverMissingImage?: boolean;
 			serverId?: string;
 	  }
 	| {

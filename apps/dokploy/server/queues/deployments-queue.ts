@@ -9,6 +9,7 @@ import {
 	updateCompose,
 	updatePreviewDeployment,
 } from "@dokploy/server";
+import { canRecoverMissingImage } from "@dokploy/server/utils/docker/missing-image";
 import type { InMemoryJob } from "./in-memory-queue";
 
 /**
@@ -18,6 +19,12 @@ import type { InMemoryJob } from "./in-memory-queue";
 export const processDeploymentJob = async (job: InMemoryJob) => {
 	try {
 		if (job.data.applicationType === "application") {
+			// The user may have stopped or repaired the app while this job waited.
+			if (
+				job.data.recoverMissingImage &&
+				!(await canRecoverMissingImage(job.data.applicationId))
+			)
+				return;
 			await updateApplicationStatus(job.data.applicationId, "running");
 
 			if (job.data.type === "redeploy") {
